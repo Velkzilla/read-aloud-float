@@ -40,6 +40,7 @@ var brapi = browser;
 
     const stored = await brapi.storage.local.get([STORAGE_KEY]);
     state = normalizeState(stored[STORAGE_KEY]);
+    state.open = false;
 
     mount();
     bindEvents();

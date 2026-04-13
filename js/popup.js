@@ -43,6 +43,9 @@ $(function() {
   updateButtons()
     .then(getSettings.bind(null, ["showHighlighting", "readAloudTab"]))
     .then(function(settings) {
+      if (isEmbeddedMode) {
+        return;
+      }
       if (settings.showHighlighting == 2 && isPopupMode) {
         return getActiveTab()
           .then(function(activeTab) {
