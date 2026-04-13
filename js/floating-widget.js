@@ -6,6 +6,7 @@ var brapi = browser;
 
   const ROOT_ID = "read-aloud-floating-widget-root";
   const STORAGE_KEY = "floatingWidgetState";
+  const DISABLE_KEY = "disableFloatingWidget";
   const EDGE_MARGIN = 16;
   const BALL_SIZE = 56;
   const MIN_PANEL_WIDTH = 320;
@@ -30,7 +31,10 @@ var brapi = browser;
   let saveTimer = null;
   let suppressBallClick = false;
   let isDestroyed = false;
+  let isMounted = false;
+  let widgetDisabled = false;
   let resizeListener;
+  let storageChangeListener;
 
   init().catch(function(err) {
     console.error("Read Aloud floating widget failed to initialize", err);
@@ -40,15 +44,25 @@ var brapi = browser;
     tabId = await getSenderTabId();
     if (typeof tabId !== "number") return;
 
-    const stored = await brapi.storage.local.get([STORAGE_KEY]);
+    const stored = await brapi.storage.local.get([STORAGE_KEY, DISABLE_KEY]);
     state = normalizeState(stored[STORAGE_KEY]);
     state.open = false;
+    widgetDisabled = Boolean(stored[DISABLE_KEY]);
 
-    mount();
-    bindEvents();
-    applyState();
+    storageChangeListener = onStorageChanged;
+    brapi.storage.local.onChanged.addListener(storageChangeListener);
+
     resizeListener = onViewportResize.bind(null);
     window.addEventListener("resize", resizeListener, {passive: true});
+    ensureMounted();
+  }
+
+  function ensureMounted() {
+    if (isDestroyed || widgetDisabled || isMounted) return;
+    mount();
+    bindEvents();
+    isMounted = true;
+    applyState();
   }
 
   function getSenderTabId() {
@@ -156,7 +170,7 @@ var brapi = browser;
   }
 
   function applyState() {
-    if (isDestroyed) return;
+    if (isDestroyed || !isMounted) return;
     constrainState();
 
     ball.style.top = state.top + "px";
@@ -197,9 +211,16 @@ var brapi = browser;
   }
 
   function onViewportResize() {
-    if (isDestroyed) return;
+    if (isDestroyed || !isMounted) return;
     applyState();
     saveState();
+  }
+
+  function onStorageChanged(changes, areaName) {
+    if (areaName != "local" || !changes[DISABLE_KEY]) return;
+    widgetDisabled = Boolean(changes[DISABLE_KEY].newValue);
+    if (widgetDisabled) unmountWidget({stopPlayback: false, permanent: false});
+    else ensureMounted();
   }
 
   function minimizePanel() {
@@ -209,8 +230,12 @@ var brapi = browser;
   }
 
   function destroyWidget() {
-    if (isDestroyed) return;
-    isDestroyed = true;
+    unmountWidget({stopPlayback: true, permanent: true});
+  }
+
+  function unmountWidget(options) {
+    options = options || {};
+    if (isDestroyed || (!isMounted && !options.permanent)) return;
     state.open = false;
     if (saveTimer) {
       clearTimeout(saveTimer);
@@ -227,13 +252,25 @@ var brapi = browser;
         open: false
       }
     });
-    brapi.runtime.sendMessage({method: "stop", args: []}, function() {
-      if (brapi.runtime.lastError) {
-        console.error("Read Aloud floating widget failed to stop playback", brapi.runtime.lastError.message);
-      }
-    });
-    if (resizeListener) window.removeEventListener("resize", resizeListener);
+    if (options.stopPlayback) {
+      brapi.runtime.sendMessage({method: "stop", args: []}, function() {
+        if (brapi.runtime.lastError) {
+          console.error("Read Aloud floating widget failed to stop playback", brapi.runtime.lastError.message);
+        }
+      });
+    }
     if (root && root.parentNode) root.parentNode.removeChild(root);
+    root = null;
+    shadow = null;
+    ball = null;
+    panel = null;
+    iframe = null;
+    isMounted = false;
+    if (options.permanent) {
+      isDestroyed = true;
+      if (storageChangeListener) brapi.storage.local.onChanged.removeListener(storageChangeListener);
+      if (resizeListener) window.removeEventListener("resize", resizeListener);
+    }
   }
 
   function enableBallDragging(handle) {

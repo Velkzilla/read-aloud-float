@@ -115,6 +115,12 @@ Promise.all([
       saveSettings({showHighlighting: $(this).val()})
     })
 
+  $("#disable-floating-widget")
+    .prop("checked", Boolean(settings.disableFloatingWidget))
+    .change(function() {
+      saveSettings({disableFloatingWidget: $(this).prop("checked")})
+    })
+
 
   //voiceTest
   const demoSpeech = {

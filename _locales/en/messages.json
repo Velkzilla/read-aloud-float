@@ -74,6 +74,9 @@
   "options_highlighting_window": {
     "message": "Show in a separate window"
   },
+  "options_disable_floating_widget": {
+    "message": "Always hide floating bubble"
+  },
   "options_hotkeys_link": {
     "message": "Edit shortcut keys"
   },

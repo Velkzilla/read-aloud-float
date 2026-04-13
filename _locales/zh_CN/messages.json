@@ -74,6 +74,9 @@
   "options_highlighting_window": {
     "message": "在单独窗口中显示"
   },
+  "options_disable_floating_widget": {
+    "message": "总是关闭悬浮球"
+  },
   "options_hotkeys_link": {
     "message": "编辑快捷键"
   },
