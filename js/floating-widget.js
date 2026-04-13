@@ -29,6 +29,8 @@ var brapi = browser;
   let iframe;
   let saveTimer = null;
   let suppressBallClick = false;
+  let isDestroyed = false;
+  let resizeListener;
 
   init().catch(function(err) {
     console.error("Read Aloud floating widget failed to initialize", err);
@@ -45,7 +47,8 @@ var brapi = browser;
     mount();
     bindEvents();
     applyState();
-    window.addEventListener("resize", onViewportResize, {passive: true});
+    resizeListener = onViewportResize.bind(null);
+    window.addEventListener("resize", resizeListener, {passive: true});
   }
 
   function getSenderTabId() {
@@ -140,9 +143,8 @@ var brapi = browser;
 
     shadow.querySelectorAll(".ra-panel-button").forEach(function(button) {
       button.addEventListener("click", function() {
-        state.open = false;
-        applyState();
-        saveState();
+        if (button.dataset.action == "close") destroyWidget();
+        else minimizePanel();
       });
     });
 
@@ -154,6 +156,7 @@ var brapi = browser;
   }
 
   function applyState() {
+    if (isDestroyed) return;
     constrainState();
 
     ball.style.top = state.top + "px";
@@ -194,8 +197,43 @@ var brapi = browser;
   }
 
   function onViewportResize() {
+    if (isDestroyed) return;
     applyState();
     saveState();
+  }
+
+  function minimizePanel() {
+    state.open = false;
+    applyState();
+    saveState();
+  }
+
+  function destroyWidget() {
+    if (isDestroyed) return;
+    isDestroyed = true;
+    state.open = false;
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    brapi.storage.local.set({
+      floatingWidgetState: {
+        side: state.side,
+        top: state.top,
+        width: state.width,
+        height: state.height,
+        panelTop: state.panelTop,
+        panelLeft: state.panelLeft,
+        open: false
+      }
+    });
+    brapi.runtime.sendMessage({method: "stop", args: []}, function() {
+      if (brapi.runtime.lastError) {
+        console.error("Read Aloud floating widget failed to stop playback", brapi.runtime.lastError.message);
+      }
+    });
+    if (resizeListener) window.removeEventListener("resize", resizeListener);
+    if (root && root.parentNode) root.parentNode.removeChild(root);
   }
 
   function enableBallDragging(handle) {
