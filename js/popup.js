@@ -130,11 +130,23 @@ function handleError(err) {
 }
 
 function createTabAndClosePopup(url) {
-  brapi.tabs.create({url})
-    .then(() => {
+  var resolvedUrl = resolveExtensionUrl(url)
+  var openTab = brapi.tabs && brapi.tabs.create
+    ? brapi.tabs.create({url: resolvedUrl})
+    : bgPageInvoke("openPage", [resolvedUrl])
+
+  Promise.resolve(openTab)
+    .then(function() {
       if (queryString.isPopup) window.close()
     })
     .catch(handleError)
+}
+
+function resolveExtensionUrl(url) {
+  if (!url) return url
+  if (url[0] == "#") return url
+  if (/^[a-z]+:/i.test(url)) return url
+  return brapi.runtime.getURL(url.replace(/^\//, ""))
 }
 
 

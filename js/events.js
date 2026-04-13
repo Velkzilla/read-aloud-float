@@ -165,6 +165,9 @@ var handlers = {
   getSenderTabId: function() {
     return this.sender && this.sender.tab && this.sender.tab.id
   },
+  openPage: function(url) {
+    return brapi.tabs.create({url: url})
+  },
   startPairing: function() {
     return phoneTtsEngine.startPairing()
   },
