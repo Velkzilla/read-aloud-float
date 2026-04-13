@@ -16,8 +16,8 @@
 
 .ra-ball {
   position: fixed;
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(135deg, #1d6ef2, #57b0ff);
@@ -27,15 +27,22 @@
   justify-content: center;
   cursor: grab;
   padding: 0;
+  opacity: 0.95;
+  transition: left .22s ease, right .22s ease, opacity .22s ease, transform .22s ease, box-shadow .22s ease;
 }
 
 .ra-ball:active {
   cursor: grabbing;
 }
 
+.ra-ball.is-idle {
+  opacity: 0.38;
+  box-shadow: 0 8px 18px rgba(11, 45, 102, 0.18);
+}
+
 .ra-ball-icon {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
 }
 
 .ra-panel {

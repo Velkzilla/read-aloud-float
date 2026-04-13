@@ -8,7 +8,9 @@ var brapi = browser;
   const STORAGE_KEY = "floatingWidgetState";
   const DISABLE_KEY = "disableFloatingWidget";
   const EDGE_MARGIN = 16;
-  const BALL_SIZE = 56;
+  const BALL_SIZE = 44;
+  const ACTIVE_OFFSET = 0;
+  const IDLE_OFFSET = Math.round(BALL_SIZE / 2) * -1;
   const MIN_PANEL_WIDTH = 320;
   const MIN_PANEL_HEIGHT = 280;
   const DEFAULT_STATE = {
@@ -33,6 +35,7 @@ var brapi = browser;
   let isDestroyed = false;
   let isMounted = false;
   let widgetDisabled = false;
+  let isBallIdle = false;
   let resizeListener;
   let storageChangeListener;
 
@@ -48,6 +51,7 @@ var brapi = browser;
     state = normalizeState(stored[STORAGE_KEY]);
     state.open = false;
     widgetDisabled = Boolean(stored[DISABLE_KEY]);
+    isBallIdle = true;
 
     storageChangeListener = onStorageChanged;
     brapi.storage.local.onChanged.addListener(storageChangeListener);
@@ -148,6 +152,7 @@ var brapi = browser;
 
   function bindEvents() {
     ball.addEventListener("click", function() {
+      awakenBall();
       if (suppressBallClick) return;
       state.open = !state.open;
       if (state.open && state.panelLeft == null) setDefaultPanelPosition();
@@ -157,10 +162,23 @@ var brapi = browser;
 
     shadow.querySelectorAll(".ra-panel-button").forEach(function(button) {
       button.addEventListener("click", function() {
+        awakenBall();
         if (button.dataset.action == "close") destroyWidget();
         else minimizePanel();
       });
     });
+
+    ["mouseenter", "mousedown", "touchstart"].forEach(function(type) {
+      ball.addEventListener(type, awakenBall, {passive: true});
+    });
+    ball.addEventListener("mouseleave", function() {
+      if (!state.open) setBallIdle(true);
+    }, {passive: true});
+    ball.addEventListener("blur", function() {
+      if (!state.open) setBallIdle(true);
+    }, true);
+    panel.addEventListener("mousedown", awakenBall, {passive: true});
+    panel.addEventListener("touchstart", awakenBall, {passive: true});
 
     enableBallDragging(ball);
     enablePanelDragging(shadow.querySelector(".ra-panel-header"));
@@ -174,12 +192,15 @@ var brapi = browser;
     constrainState();
 
     ball.style.top = state.top + "px";
-    ball.style.left = state.side == "left" ? EDGE_MARGIN + "px" : "";
-    ball.style.right = state.side == "right" ? EDGE_MARGIN + "px" : "";
+    ball.style.left = state.side == "left" ? getBallOffset() + "px" : "";
+    ball.style.right = state.side == "right" ? getBallOffset() + "px" : "";
+    ball.classList.toggle("is-idle", isBallIdle && !state.open);
 
     panel.hidden = !state.open;
     panel.classList.toggle("is-open", state.open);
-    if (!state.open) return;
+    if (!state.open) {
+      return;
+    }
 
     if (state.panelLeft == null) setDefaultPanelPosition();
     constrainState();
@@ -225,6 +246,7 @@ var brapi = browser;
 
   function minimizePanel() {
     state.open = false;
+    setBallIdle(true);
     applyState();
     saveState();
   }
@@ -277,6 +299,7 @@ var brapi = browser;
     handle.addEventListener("mousedown", function(event) {
       if (event.button !== 0) return;
       event.preventDefault();
+      awakenBall();
 
       const startY = event.clientY;
       const startTop = state.top;
@@ -318,6 +341,7 @@ var brapi = browser;
       if (event.button !== 0) return;
       if (event.target.closest(".ra-panel-button")) return;
       event.preventDefault();
+      awakenBall();
 
       const startX = event.clientX;
       const startY = event.clientY;
@@ -346,6 +370,7 @@ var brapi = browser;
     handle.addEventListener("mousedown", function(event) {
       if (event.button !== 0) return;
       event.preventDefault();
+      awakenBall();
 
       const startX = event.clientX;
       const startY = event.clientY;
@@ -460,6 +485,22 @@ var brapi = browser;
         }
       });
     }, 120);
+  }
+
+  function getBallOffset() {
+    return isBallIdle && !state.open ? IDLE_OFFSET : ACTIVE_OFFSET;
+  }
+
+  function awakenBall() {
+    if (isDestroyed || !isMounted) return;
+    setBallIdle(false);
+  }
+
+  function setBallIdle(nextIdle) {
+    if (isDestroyed || !isMounted) return;
+    if (isBallIdle == nextIdle) return;
+    isBallIdle = nextIdle;
+    applyState();
   }
 
   function clamp(value, min, max) {
