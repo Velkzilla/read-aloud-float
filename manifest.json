@@ -28,21 +28,32 @@
     "menus",
     "identity",
     "storage",
-    "https://translate.google.com/"
-  ],
-  "optional_permissions": [
-    "webRequest",
-    "webRequestBlocking",
-    "webNavigation",
+    "https://translate.google.com/",
     "http://*/",
     "https://*/",
     "file://*/*"
   ],
+  "optional_permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "webNavigation"
+  ],
   "web_accessible_resources": [
-    "js/page/*", "img/*", "css/*"
+    "js/page/*", "img/*", "css/*", "popup.html"
   ],
   "content_security_policy": "script-src 'self'; object-src 'self'",
   "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "file://*/*"
+      ],
+      "js": [
+        "js/floating-widget.js"
+      ],
+      "run_at": "document_idle"
+    },
     {
       "matches": [
         "https://piper.ttstool.com/"

@@ -1,4 +1,8 @@
 
+html, body {
+  height: 100%;
+}
+
 body {
   margin: 20px 15px 10px 15px;
 }
@@ -74,6 +78,17 @@ body.is-popup #highlight {
 }
 body:not(.is-popup) #highlight {
   height: calc(100vh - 150px);
+}
+body.is-embedded {
+  margin: 12px;
+  overflow: hidden;
+}
+body.is-embedded #highlight {
+  height: calc(100vh - 165px);
+  min-height: 150px;
+}
+body.is-embedded #footer {
+  white-space: normal;
 }
 
 

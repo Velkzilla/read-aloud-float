@@ -162,6 +162,9 @@ var handlers = {
       playbackError = null
     }
   },
+  getSenderTabId: function() {
+    return this.sender && this.sender.tab && this.sender.tab.id
+  },
   startPairing: function() {
     return phoneTtsEngine.startPairing()
   },

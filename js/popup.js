@@ -1,5 +1,7 @@
 
 var queryString = getQueryString()
+var isPopupMode = Boolean(queryString.isPopup)
+var isEmbeddedMode = Boolean(queryString.embedded)
 
 const engineInitializingSubject = new rxjs.Subject()
 engineInitializingSubject
@@ -14,8 +16,11 @@ engineInitializingSubject
 
 
 $(function() {
-  if (queryString.isPopup) $("body").addClass("is-popup")
-  else getCurrentTab().then(function(currentTab) {return updateSettings({readAloudTab: currentTab.id})})
+  if (isPopupMode) $("body").addClass("is-popup")
+  if (isEmbeddedMode) $("body").addClass("is-embedded")
+  if (!isPopupMode && !isEmbeddedMode) {
+    getCurrentTab().then(function(currentTab) {return updateSettings({readAloudTab: currentTab.id})})
+  }
 
   $("#btnPlay").click(onPlay);
   $("#btnPause").click(onPause);
@@ -28,14 +33,20 @@ $(function() {
   $("#decrease-window-size").click(changeWindowSize.bind(null, -1));
   $("#increase-window-size").click(changeWindowSize.bind(null, +1));
   $("#toggle-dark-mode").click(toggleDarkMode);
+  if (isEmbeddedMode) {
+    $("#footer a").click(function(event) {
+      event.preventDefault()
+      createTabAndClosePopup($(this).attr("href"))
+    })
+  }
 
   updateButtons()
     .then(getSettings.bind(null, ["showHighlighting", "readAloudTab"]))
     .then(function(settings) {
-      if (settings.showHighlighting == 2 && queryString.isPopup) {
+      if (settings.showHighlighting == 2 && isPopupMode) {
         return getActiveTab()
           .then(function(activeTab) {
-            var url = brapi.runtime.getURL("popup.html?tab=" + activeTab.id)
+            var url = brapi.runtime.getURL("popup.html?tab=" + activeTab.id + "&autoplay=1")
             return (settings.readAloudTab ? Promise.resolve() : Promise.reject("No readAloudTab"))
               .then(function() {return updateTab(settings.readAloudTab, {url: url, active: true})})
               .then(function(tab) {return updateWindow(tab.windowId, {focused: true})})
@@ -51,7 +62,7 @@ $(function() {
           })
           .then(window.close)
       }
-      else if (queryString.tab) {
+      else if (queryString.tab && queryString.autoplay) {
         return bgPageInvoke("stop")
           .then(function() {$("#btnPlay").click()})
       }
@@ -104,7 +115,8 @@ function handleError(err) {
           createTabAndClosePopup(config.pdfViewerUrl)
           break
         case "#connect-phone":
-          location.href = "connect-phone.html"
+          if (isEmbeddedMode) createTabAndClosePopup("connect-phone.html")
+          else location.href = "connect-phone.html"
           break
       }
     })
@@ -249,7 +261,9 @@ function onStop() {
 }
 
 function onSettings() {
-  location.href = "options.html?referer=popup.html" + (queryString.isPopup ? "&isPopup=" + queryString.isPopup : "")
+  var url = "options.html?referer=popup.html" + (queryString.isPopup ? "&isPopup=" + queryString.isPopup : "")
+  if (isEmbeddedMode) createTabAndClosePopup(url)
+  else location.href = url
 }
 
 function onForward() {
@@ -295,7 +309,7 @@ function refreshSize() {
       $("#highlight").css({
         "font-size": fontSize,
       })
-      if (queryString.isPopup) $("#highlight").css({
+      if (isPopupMode) $("#highlight").css({
         width: isMobileOS() ? "100%" : windowSize[0],
         height: windowSize[1]
       })

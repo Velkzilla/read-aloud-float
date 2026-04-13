@@ -1,0 +1,176 @@
+:host {
+  all: initial;
+}
+
+.ra-widget {
+  position: fixed;
+  inset: 0;
+  font-family: Arial, sans-serif;
+  pointer-events: none;
+}
+
+.ra-ball,
+.ra-panel {
+  pointer-events: auto;
+}
+
+.ra-ball {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1d6ef2, #57b0ff);
+  box-shadow: 0 10px 30px rgba(11, 45, 102, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding: 0;
+}
+
+.ra-ball:active {
+  cursor: grabbing;
+}
+
+.ra-ball-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.ra-panel {
+  position: fixed;
+  display: none;
+  min-width: 320px;
+  min-height: 280px;
+  background: #ffffff;
+  border: 1px solid rgba(16, 24, 40, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+  overflow: hidden;
+}
+
+.ra-panel.is-open {
+  display: block;
+}
+
+.ra-panel-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 16px;
+  background: linear-gradient(180deg, #f7faff, #eef4ff);
+  border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+  cursor: move;
+  user-select: none;
+}
+
+.ra-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ra-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ra-panel-button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ra-panel-button:hover {
+  background: rgba(37, 99, 235, 0.16);
+}
+
+.ra-panel-body {
+  height: calc(100% - 48px);
+  background: #fff;
+}
+
+.ra-panel-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.ra-resize-handle {
+  position: absolute;
+}
+
+.ra-resize-n,
+.ra-resize-s {
+  left: 10px;
+  right: 10px;
+  height: 10px;
+}
+
+.ra-resize-e,
+.ra-resize-w {
+  top: 10px;
+  bottom: 10px;
+  width: 10px;
+}
+
+.ra-resize-n {
+  top: -5px;
+  cursor: ns-resize;
+}
+
+.ra-resize-s {
+  bottom: -5px;
+  cursor: ns-resize;
+}
+
+.ra-resize-e {
+  right: -5px;
+  cursor: ew-resize;
+}
+
+.ra-resize-w {
+  left: -5px;
+  cursor: ew-resize;
+}
+
+.ra-resize-ne,
+.ra-resize-nw,
+.ra-resize-se,
+.ra-resize-sw {
+  width: 14px;
+  height: 14px;
+}
+
+.ra-resize-ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.ra-resize-se {
+  right: -7px;
+  bottom: -7px;
+  cursor: nwse-resize;
+}
+
+.ra-resize-sw {
+  left: -7px;
+  bottom: -7px;
+  cursor: nesw-resize;
+}
+
+.ra-resize-nw {
+  top: -7px;
+  left: -7px;
+  cursor: nwse-resize;
+}
